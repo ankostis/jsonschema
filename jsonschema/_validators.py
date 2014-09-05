@@ -169,13 +169,13 @@ def dependencies(validator, dependencies, instance, schema):
     if not validator.is_type(instance, "object"):
         return
 
-    for property, dependency in iteritems(dependencies):
-        if property not in instance:
+    for prop, dependency in iteritems(dependencies):
+        if prop not in instance:
             continue
 
         if validator.is_type(dependency, "object"):
             for error in validator.descend(
-                instance, dependency, schema_path=property,
+                instance, dependency, schema_path=prop,
             ):
                 yield error
         else:
@@ -183,7 +183,7 @@ def dependencies(validator, dependencies, instance, schema):
             for dependency in dependencies:
                 if dependency not in instance:
                     yield ValidationError(
-                        "%r is a dependency of %r" % (dependency, property)
+                        "%r is a dependency of %r" % (dependency, prop)
                     )
 
 
@@ -198,24 +198,24 @@ def ref(validator, ref, instance, schema):
             yield error
 
 
-def type_draft3(validator, types, instance, schema):
-    types = _utils.ensure_list(types)
+def type_draft3(validator, jstypes, instance, schema):
+    jstypes = _utils.ensure_list(jstypes)
 
     all_errors = []
-    for index, type in enumerate(types):
-        if type == "any":
+    for index, jstype in enumerate(jstypes):
+        if jstype == "any":
             return
-        if validator.is_type(type, "object"):
-            errors = list(validator.descend(instance, type, schema_path=index))
+        if validator.is_type(jstype, "object"):
+            errors = list(validator.descend(instance, jstype, schema_path=index))
             if not errors:
                 return
             all_errors.extend(errors)
         else:
-            if validator.is_type(instance, type):
+            if validator.is_type(instance, jstype):
                 return
     else:
         yield ValidationError(
-            _utils.types_msg(instance, types), context=all_errors,
+            _utils.types_missmatch_msg(instance, jstypes), context=all_errors,
         )
 
 
@@ -223,25 +223,25 @@ def properties_draft3(validator, properties, instance, schema):
     if not validator.is_type(instance, "object"):
         return
 
-    for property, subschema in iteritems(properties):
-        if property in instance:
+    for prop, subschema in iteritems(properties):
+        if prop in instance:
             for error in validator.descend(
-                instance[property],
+                instance[prop],
                 subschema,
-                path=property,
-                schema_path=property,
+                path=prop,
+                schema_path=prop,
             ):
                 yield error
         elif subschema.get("required", False):
-            error = ValidationError("%r is a required property" % property)
+            error = ValidationError("%r is a required property" % prop)
             error._set(
                 validator="required",
                 validator_value=subschema["required"],
                 instance=instance,
                 schema=schema,
             )
-            error.path.appendleft(property)
-            error.schema_path.extend([property, "required"])
+            error.path.appendleft(prop)
+            error.schema_path.extend([prop, "required"])
             yield error
 
 
@@ -263,24 +263,24 @@ def extends_draft3(validator, extends, instance, schema):
             yield error
 
 
-def type_draft4(validator, types, instance, schema):
-    types = _utils.ensure_list(types)
+def type_draft4(validator, jstypes, instance, schema):
+    jstypes = _utils.ensure_list(jstypes)
 
-    if not any(validator.is_type(instance, type) for type in types):
-        yield ValidationError(_utils.types_msg(instance, types))
+    if not any(validator.is_type(instance, jstype) for jstype in jstypes):
+        yield ValidationError(_utils.types_missmatch_msg(instance, jstypes))
 
 
 def properties_draft4(validator, properties, instance, schema):
     if not validator.is_type(instance, "object"):
         return
 
-    for property, subschema in iteritems(properties):
-        if property in instance:
+    for prop, subschema in iteritems(properties):
+        if prop in instance:
             for error in validator.descend(
-                instance[property],
+                instance[prop],
                 subschema,
-                path=property,
-                schema_path=property,
+                path=prop,
+                schema_path=prop,
             ):
                 yield error
 
@@ -288,9 +288,9 @@ def properties_draft4(validator, properties, instance, schema):
 def required_draft4(validator, required, instance, schema):
     if not validator.is_type(instance, "object"):
         return
-    for property in required:
-        if property not in instance:
-            yield ValidationError("%r is a required property" % property)
+    for prop in required:
+        if prop not in instance:
+            yield ValidationError("%r is a required property" % prop)
 
 
 def minProperties_draft4(validator, mP, instance, schema):
@@ -328,7 +328,7 @@ def oneOf_draft4(validator, oneOf, instance, schema):
             context=all_errors,
         )
 
-    more_valid = [s for i, s in subschemas if validator.is_valid(instance, s)]
+    more_valid = [s for _, s in subschemas if validator.is_valid(instance, s)]
     if more_valid:
         more_valid.append(first_valid)
         reprs = ", ".join(repr(schema) for schema in more_valid)

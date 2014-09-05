@@ -58,10 +58,10 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
         DEFAULT_TYPES = dict(default_types)
 
         def __init__(
-            self, schema, types=(), resolver=None, format_checker=None,
+            self, schema, jstypes=(), resolver=None, format_checker=None,
         ):
             self._types = dict(self.DEFAULT_TYPES)
-            self._types.update(types)
+            self._types.update(jstypes)
 
             if resolver is None:
                 resolver = RefResolver.from_schema(schema)
@@ -116,10 +116,11 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
             for error in self.iter_errors(*args, **kwargs):
                 raise error
 
-        def is_type(self, instance, type):
-            if type not in self._types:
-                raise UnknownType(type, instance, self.schema)
-            pytypes = self._types[type]
+        def is_type(self, instance, jstype):
+            try:
+                pytypes = self._types[jstype]
+            except KeyError:
+                raise UnknownType(jstype, instance, self.schema)
 
             # bool inherits from int, so ensure bools aren't reported as ints
             if isinstance(instance, bool):

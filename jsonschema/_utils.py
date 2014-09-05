@@ -95,11 +95,11 @@ def find_additional_properties(instance, schema):
 
     properties = schema.get("properties", {})
     patterns = "|".join(schema.get("patternProperties", {}))
-    for property in instance:
-        if property not in properties:
-            if patterns and re.search(patterns, property):
+    for prop in instance:
+        if prop not in properties:
+            if patterns and re.search(patterns, prop):
                 continue
-            yield property
+            yield prop
 
 
 def extras_msg(extras):
@@ -115,7 +115,7 @@ def extras_msg(extras):
     return ", ".join(repr(extra) for extra in extras), verb
 
 
-def types_msg(instance, types):
+def types_missmatch_msg(instance, types):
     """
     Create an error message for a failure to match the given types.
 

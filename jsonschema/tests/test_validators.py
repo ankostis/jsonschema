@@ -571,7 +571,7 @@ class TestDraft3Validator(ValidatorTestMixin, unittest.TestCase):
 
     def test_non_string_custom_types(self):
         schema = {'type': [None]}
-        cls = self.validator_class(schema, types={None: type(None)})
+        cls = self.validator_class(schema, jstypes={None: type(None)})
         cls.validate(None, schema)
 
 
