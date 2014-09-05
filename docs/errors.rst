@@ -24,9 +24,9 @@ raised or returned, depending on which method or function is used.
 
                                         :attr:`schema_path`
 
-                                        :attr:`validator`
+                                        :attr:`checker`
 
-                                        :attr:`validator_value`
+                                        :attr:`checker_value`
     ===============  =================  ========================
 
 
@@ -34,32 +34,32 @@ raised or returned, depending on which method or function is used.
 
         A human readable message explaining the error.
 
-    .. attribute:: validator
+    .. attribute:: checker
 
-        The failed `validator
+        The failed `checker
         <http://json-schema.org/latest/json-schema-validation.html#anchor12>`_.
 
-    .. attribute:: validator_value
+    .. attribute:: checker_value
 
-        The value for the failed validator in the schema.
+        The value for the failed checker in the schema.
 
     .. attribute:: schema
 
         The full schema that this error came from. This is potentially a
-        subschema from within the schema that was passed into the validator, or
+        subschema from within the schema that was passed into the checker, or
         even an entirely different schema if a :validator:`$ref` was followed.
 
     .. attribute:: relative_schema_path
 
         A :class:`collections.deque` containing the path to the failed
-        validator within the schema.
+        checker within the schema.
 
     .. attribute:: absolute_schema_path
 
         A :class:`collections.deque` containing the path to the failed
-        validator within the schema, but always relative to the
+        checker within the schema, but always relative to the
         *original* schema as opposed to any subschema (i.e. the one
-        originally passed into a validator, *not* :attr:`schema`\).
+        originally passed into a checker, *not* :attr:`schema`\).
 
     .. attribute:: schema_path
 
@@ -174,7 +174,7 @@ the specific part of the instance and subschema that caused each of the errors.
 This can be seen with the :attr:`~ValidationError.instance` and
 :attr:`~ValidationError.schema` attributes.
 
-With validators like :validator:`anyOf`, the :attr:`~ValidationError.context`
+With checkers like :checker:`anyOf`, the :attr:`~ValidationError.context`
 attribute can be used to see the sub-errors which caused the failure. Since
 these errors actually came from two separate subschemas, it can be helpful to
 look at the :attr:`~ValidationError.schema_path` attribute as well to see where
@@ -219,7 +219,7 @@ easier debugging.
 ErrorTrees
 ----------
 
-If you want to programmatically be able to query which properties or validators
+If you want to programmatically be able to query which properties or checkers
 failed when validating a given instance, you probably will want to do so using
 :class:`ErrorTree` objects.
 
@@ -293,7 +293,7 @@ the :attr:`~ErrorTree.errors` attribute.
     >>> sorted(tree[0].errors)
     ['enum', 'type']
 
-Here we see that the :validator:`enum` and :validator:`type` validators failed
+Here we see that the :validator:`enum` and :validator:`type` checkers failed
 for index ``0``. In fact :attr:`~ErrorTree.errors` is a dict, whose values are
 the :class:`ValidationError`\s, so we can get at those directly if we want
 them.
@@ -303,7 +303,7 @@ them.
     >>> print(tree[0].errors["type"].message)
     'spam' is not of type 'number'
 
-Of course this means that if we want to know if a given validator failed for a
+Of course this means that if we want to know if a given checker failed for a
 given index, we check for its presence in :attr:`~ErrorTree.errors`:
 
 .. doctest::
@@ -329,7 +329,7 @@ That's all you need to know to use error trees.
 To summarize, each tree contains child trees that can be accessed by indexing
 the tree to get the corresponding child tree for a given index into the
 instance. Each tree and child has a :attr:`~ErrorTree.errors` attribute, a
-dict, that maps the failed validator to the corresponding validation error.
+dict, that maps the failed checker to the corresponding validation error.
 
 
 best_match and relevance
@@ -361,7 +361,7 @@ to guess the most relevant error in a given bunch.
 
     If the resulting match is either :validator:`oneOf` or :validator:`anyOf`,
     the *opposite* assumption is made -- i.e. the deepest error is picked,
-    since these validators only need to match once, and any other errors may
+    since these checkers only need to match once, and any other errors may
     not be relevant.
 
     :argument iterable errors: the errors to select from. Do not provide a
@@ -391,12 +391,12 @@ to guess the most relevant error in a given bunch.
     :func:`sorted` or :func:`max` will cause more relevant errors to be
     considered greater than less relevant ones.
 
-    Within the different validators that can fail, this function
+    Within the different checkers that can fail, this function
     considers :validator:`anyOf` and :validator:`oneOf` to be *weak*
-    validation errors, and will sort them lower than other validators at
+    validation errors, and will sort them lower than other checkers at
     the same level in the instance.
 
-    If you want to change the set of weak [or strong] validators you can create
+    If you want to change the set of weak [or strong] checkers you can create
     a custom version of this function with :func:`by_relevance` and provide a
     different set of each.
 
@@ -425,10 +425,10 @@ to guess the most relevant error in a given bunch.
 
     Create a key function that can be used to sort errors by relevance.
 
-    :argument set weak: a collection of validators to consider to be "weak". If
+    :argument set weak: a collection of checkers to consider to be "weak". If
         there are two errors at the same level of the instance and one is in
-        the set of weak validators, the other error will take priority. By
+        the set of weak checkers, the other error will take priority. By
         default, :validator:`anyOf` and :validator:`oneOf` are considered weak
-        validators and will be superceded by other same-level validation
+        checkers and will be superceded by other same-level validation
         errors.
-    :argument set strong: a collection of validators to consider to be "strong"
+    :argument set strong: a collection of checkers to consider to be "strong"

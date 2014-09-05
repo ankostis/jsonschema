@@ -9,7 +9,8 @@ try:
 except ImportError:
     requests = None
 
-from jsonschema import _utils, _validators
+from jsonschema import _utils
+from jsonschema import _rules
 from jsonschema.compat import (
     Sequence, urljoin, urlsplit, urldefrag, unquote, urlopen,
     str_types, int_types, iteritems,
@@ -20,7 +21,7 @@ from jsonschema.exceptions import RefResolutionError, SchemaError, UnknownType
 
 _unset = _utils.Unset()
 
-validators = {}
+checkers = {}
 meta_schemas = _utils.URIDict()
 
 
@@ -28,7 +29,7 @@ def validates(version):
     """
     Register the decorated validator for a ``version`` of the specification.
 
-    Registered validators and their meta schemas will be considered when
+    Registered checkers and their meta schemas will be considered when
     parsing ``$schema`` properties' URIs.
 
     :argument str version: an identifier to use as the version's name
@@ -37,14 +38,14 @@ def validates(version):
     """
 
     def _validates(cls):
-        validators[version] = cls
+        checkers[version] = cls
         if u"id" in cls.META_SCHEMA:
             meta_schemas[cls.META_SCHEMA[u"id"]] = cls
         return cls
     return _validates
 
 
-def create(meta_schema, validators=(), version=None, default_types=None):  # noqa
+def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
     if default_types is None:
         default_types = {
             u"array" : list, u"boolean" : bool, u"integer" : int_types,
@@ -53,7 +54,7 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
         }
 
     class Validator(object):
-        VALIDATORS = dict(validators)
+        CHECKERS = dict(checkers)
         META_SCHEMA = dict(meta_schema)
         DEFAULT_TYPES = dict(default_types)
 
@@ -82,12 +83,12 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
             with self.resolver.in_scope(_schema.get(u"id", u"")):
                 ref = _schema.get(u"$ref")
                 if ref is not None:
-                    validators = [(u"$ref", ref)]
+                    checkers = [(u"$ref", ref)]
                 else:
-                    validators = iteritems(_schema)
+                    checkers = iteritems(_schema)
 
-                for k, v in validators:
-                    validator = self.VALIDATORS.get(k)
+                for k, v in checkers:
+                    validator = self.CHECKERS.get(k)
                     if validator is None:
                         continue
 
@@ -95,8 +96,8 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
                     for error in errors:
                         # set details if not already set by the called fn
                         error._set(
-                            validator=k,
-                            validator_value=v,
+                            checker=k,
+                            checker_value=v,
                             instance=instance,
                             schema=_schema,
                         )
@@ -143,12 +144,12 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
     return Validator
 
 
-def extend(validator, validators, version=None):
-    all_validators = dict(validator.VALIDATORS)
-    all_validators.update(validators)
+def extend(validator, checkers, version=None):
+    all_checkers = dict(validator.CHECKERS)
+    all_checkers.update(checkers)
     return create(
         meta_schema=validator.META_SCHEMA,
-        validators=all_validators,
+        checkers=all_checkers,
         version=version,
         default_types=validator.DEFAULT_TYPES,
     )
@@ -156,62 +157,62 @@ def extend(validator, validators, version=None):
 
 Draft3Validator = create(
     meta_schema=_utils.load_schema("draft3"),
-    validators={
-        u"$ref" : _validators.ref,
-        u"additionalItems" : _validators.additionalItems,
-        u"additionalProperties" : _validators.additionalProperties,
-        u"dependencies" : _validators.dependencies,
-        u"disallow" : _validators.disallow_draft3,
-        u"divisibleBy" : _validators.multipleOf,
-        u"enum" : _validators.enum,
-        u"extends" : _validators.extends_draft3,
-        u"format" : _validators.format,
-        u"items" : _validators.items,
-        u"maxItems" : _validators.maxItems,
-        u"maxLength" : _validators.maxLength,
-        u"maximum" : _validators.maximum,
-        u"minItems" : _validators.minItems,
-        u"minLength" : _validators.minLength,
-        u"minimum" : _validators.minimum,
-        u"multipleOf" : _validators.multipleOf,
-        u"pattern" : _validators.pattern,
-        u"patternProperties" : _validators.patternProperties,
-        u"properties" : _validators.properties_draft3,
-        u"type" : _validators.type_draft3,
-        u"uniqueItems" : _validators.uniqueItems,
+    checkers={
+        u"$ref" : _rules.ref,
+        u"additionalItems" : _rules.additionalItems,
+        u"additionalProperties" : _rules.additionalProperties,
+        u"dependencies" : _rules.dependencies,
+        u"disallow" : _rules.disallow_draft3,
+        u"divisibleBy" : _rules.multipleOf,
+        u"enum" : _rules.enum,
+        u"extends" : _rules.extends_draft3,
+        u"format" : _rules.format,
+        u"items" : _rules.items,
+        u"maxItems" : _rules.maxItems,
+        u"maxLength" : _rules.maxLength,
+        u"maximum" : _rules.maximum,
+        u"minItems" : _rules.minItems,
+        u"minLength" : _rules.minLength,
+        u"minimum" : _rules.minimum,
+        u"multipleOf" : _rules.multipleOf,
+        u"pattern" : _rules.pattern,
+        u"patternProperties" : _rules.patternProperties,
+        u"properties" : _rules.properties_draft3,
+        u"type" : _rules.type_draft3,
+        u"uniqueItems" : _rules.uniqueItems,
     },
     version="draft3",
 )
 
 Draft4Validator = create(
     meta_schema=_utils.load_schema("draft4"),
-    validators={
-        u"$ref" : _validators.ref,
-        u"additionalItems" : _validators.additionalItems,
-        u"additionalProperties" : _validators.additionalProperties,
-        u"allOf" : _validators.allOf_draft4,
-        u"anyOf" : _validators.anyOf_draft4,
-        u"dependencies" : _validators.dependencies,
-        u"enum" : _validators.enum,
-        u"format" : _validators.format,
-        u"items" : _validators.items,
-        u"maxItems" : _validators.maxItems,
-        u"maxLength" : _validators.maxLength,
-        u"maxProperties" : _validators.maxProperties_draft4,
-        u"maximum" : _validators.maximum,
-        u"minItems" : _validators.minItems,
-        u"minLength" : _validators.minLength,
-        u"minProperties" : _validators.minProperties_draft4,
-        u"minimum" : _validators.minimum,
-        u"multipleOf" : _validators.multipleOf,
-        u"not" : _validators.not_draft4,
-        u"oneOf" : _validators.oneOf_draft4,
-        u"pattern" : _validators.pattern,
-        u"patternProperties" : _validators.patternProperties,
-        u"properties" : _validators.properties_draft4,
-        u"required" : _validators.required_draft4,
-        u"type" : _validators.type_draft4,
-        u"uniqueItems" : _validators.uniqueItems,
+    checkers={
+        u"$ref" : _rules.ref,
+        u"additionalItems" : _rules.additionalItems,
+        u"additionalProperties" : _rules.additionalProperties,
+        u"allOf" : _rules.allOf_draft4,
+        u"anyOf" : _rules.anyOf_draft4,
+        u"dependencies" : _rules.dependencies,
+        u"enum" : _rules.enum,
+        u"format" : _rules.format,
+        u"items" : _rules.items,
+        u"maxItems" : _rules.maxItems,
+        u"maxLength" : _rules.maxLength,
+        u"maxProperties" : _rules.maxProperties_draft4,
+        u"maximum" : _rules.maximum,
+        u"minItems" : _rules.minItems,
+        u"minLength" : _rules.minLength,
+        u"minProperties" : _rules.minProperties_draft4,
+        u"minimum" : _rules.minimum,
+        u"multipleOf" : _rules.multipleOf,
+        u"not" : _rules.not_draft4,
+        u"oneOf" : _rules.oneOf_draft4,
+        u"pattern" : _rules.pattern,
+        u"patternProperties" : _rules.patternProperties,
+        u"properties" : _rules.properties_draft4,
+        u"required" : _rules.required_draft4,
+        u"type" : _rules.type_draft4,
+        u"uniqueItems" : _rules.uniqueItems,
     },
     version="draft4",
 )

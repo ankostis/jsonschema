@@ -59,10 +59,10 @@ adhere to.
         An object representing the validator's meta schema (the schema that
         describes valid schemas in the given version).
 
-    .. attribute:: VALIDATORS
+    .. attribute:: CHECKERS
 
-        A mapping of validators (:class:`str`\s) to functions that validate the
-        validator property with that name. For more information see
+        A mapping of checkers (:class:`str`\s) to functions that check the
+        schema property with that name. For more information see
         :ref:`creating-validators`.
 
     .. attribute:: schema

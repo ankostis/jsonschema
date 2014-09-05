@@ -14,38 +14,38 @@ class TestCreateAndExtend(unittest.TestCase):
     def setUp(self):
         self.meta_schema = {u"properties" : {u"smelly" : {}}}
         self.smelly = mock.MagicMock()
-        self.validators = {u"smelly" : self.smelly}
+        self.checkers = {u"smelly" : self.smelly}
         self.types = {u"dict" : dict}
         self.Validator = create(
             meta_schema=self.meta_schema,
-            validators=self.validators,
+            checkers=self.checkers,
             default_types=self.types,
         )
 
-        self.validator_value = 12
-        self.schema = {u"smelly" : self.validator_value}
-        self.validator = self.Validator(self.schema)
+        self.checker_value = 12
+        self.schema = {u"smelly" : self.checker_value}
+        self.checker = self.Validator(self.schema)
 
     def test_attrs(self):
-        self.assertEqual(self.Validator.VALIDATORS, self.validators)
+        self.assertEqual(self.Validator.CHECKERS, self.checkers)
         self.assertEqual(self.Validator.META_SCHEMA, self.meta_schema)
         self.assertEqual(self.Validator.DEFAULT_TYPES, self.types)
 
     def test_init(self):
-        self.assertEqual(self.validator.schema, self.schema)
+        self.assertEqual(self.checker.schema, self.schema)
 
     def test_iter_errors(self):
         instance = "hello"
 
         self.smelly.return_value = []
-        self.assertEqual(list(self.validator.iter_errors(instance)), [])
+        self.assertEqual(list(self.checker.iter_errors(instance)), [])
 
         error = mock.Mock()
         self.smelly.return_value = [error]
-        self.assertEqual(list(self.validator.iter_errors(instance)), [error])
+        self.assertEqual(list(self.checker.iter_errors(instance)), [error])
 
         self.smelly.assert_called_with(
-            self.validator, self.validator_value, instance, self.schema,
+            self.checker, self.checker_value, instance, self.schema,
         )
 
     def test_if_a_version_is_provided_it_is_registered(self):
@@ -61,14 +61,14 @@ class TestCreateAndExtend(unittest.TestCase):
         self.assertFalse(validates.called)
 
     def test_extend(self):
-        validators = dict(self.Validator.VALIDATORS)
+        checkers = dict(self.Validator.CHECKERS)
         new = mock.Mock()
 
-        Extended = extend(self.Validator, validators={u"a new one" : new})
+        Extended = extend(self.Validator, checkers={u"a new one" : new})
 
-        validators.update([(u"a new one", new)])
-        self.assertEqual(Extended.VALIDATORS, validators)
-        self.assertNotIn(u"a new one", self.Validator.VALIDATORS)
+        checkers.update([(u"a new one", new)])
+        self.assertEqual(Extended.CHECKERS, checkers)
+        self.assertNotIn(u"a new one", self.Validator.CHECKERS)
 
         self.assertEqual(Extended.META_SCHEMA, self.Validator.META_SCHEMA)
         self.assertEqual(Extended.DEFAULT_TYPES, self.Validator.DEFAULT_TYPES)
@@ -76,7 +76,7 @@ class TestCreateAndExtend(unittest.TestCase):
 
 class TestIterErrors(unittest.TestCase):
     def setUp(self):
-        self.validator = Draft3Validator({})
+        self.checker = Draft3Validator({})
 
     def test_iter_errors(self):
         instance = [1, 2]
@@ -86,7 +86,7 @@ class TestIterErrors(unittest.TestCase):
             u"minItems" : 3
         }
 
-        got = (e.message for e in self.validator.iter_errors(instance, schema))
+        got = (e.message for e in self.checker.iter_errors(instance, schema))
         expected = [
             "%r is disallowed for [1, 2]" % (schema["disallow"],),
             "[1, 2] is too short",
@@ -104,7 +104,7 @@ class TestIterErrors(unittest.TestCase):
             }
         }
 
-        errors = list(self.validator.iter_errors(instance, schema))
+        errors = list(self.checker.iter_errors(instance, schema))
         self.assertEqual(len(errors), 4)
 
 
@@ -193,7 +193,7 @@ class TestValidationErrorMessages(unittest.TestCase):
 
 
 class TestValidationErrorDetails(unittest.TestCase):
-    # TODO: These really need unit tests for each individual validator, rather
+    # TODO: These really need unit tests for each individual checker, rather
     #       than just these higher level tests.
     def test_anyOf(self):
         instance = 5
@@ -209,8 +209,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         e = errors[0]
 
-        self.assertEqual(e.validator, "anyOf")
-        self.assertEqual(e.validator_value, schema["anyOf"])
+        self.assertEqual(e.checker, "anyOf")
+        self.assertEqual(e.checker_value, schema["anyOf"])
         self.assertEqual(e.instance, instance)
         self.assertEqual(e.schema, schema)
         self.assertIsNone(e.parent)
@@ -227,8 +227,8 @@ class TestValidationErrorDetails(unittest.TestCase):
 
         e1, e2 = sorted_errors(e.context)
 
-        self.assertEqual(e1.validator, "minimum")
-        self.assertEqual(e1.validator_value, schema["anyOf"][0]["minimum"])
+        self.assertEqual(e1.checker, "minimum")
+        self.assertEqual(e1.checker_value, schema["anyOf"][0]["minimum"])
         self.assertEqual(e1.instance, instance)
         self.assertEqual(e1.schema, schema["anyOf"][0])
         self.assertIs(e1.parent, e)
@@ -245,8 +245,8 @@ class TestValidationErrorDetails(unittest.TestCase):
 
         self.assertFalse(e1.context)
 
-        self.assertEqual(e2.validator, "type")
-        self.assertEqual(e2.validator_value, schema["anyOf"][1]["type"])
+        self.assertEqual(e2.checker, "type")
+        self.assertEqual(e2.checker_value, schema["anyOf"][1]["type"])
         self.assertEqual(e2.instance, instance)
         self.assertEqual(e2.schema, schema["anyOf"][1])
         self.assertIs(e2.parent, e)
@@ -280,8 +280,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         e = errors[0]
 
-        self.assertEqual(e.validator, "type")
-        self.assertEqual(e.validator_value, schema["type"])
+        self.assertEqual(e.checker, "type")
+        self.assertEqual(e.checker_value, schema["type"])
         self.assertEqual(e.instance, instance)
         self.assertEqual(e.schema, schema)
         self.assertIsNone(e.parent)
@@ -298,8 +298,8 @@ class TestValidationErrorDetails(unittest.TestCase):
 
         e1, e2 = sorted_errors(e.context)
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e1.validator_value, schema["type"][0]["type"])
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e1.checker_value, schema["type"][0]["type"])
         self.assertEqual(e1.instance, instance)
         self.assertEqual(e1.schema, schema["type"][0])
         self.assertIs(e1.parent, e)
@@ -314,8 +314,8 @@ class TestValidationErrorDetails(unittest.TestCase):
 
         self.assertFalse(e1.context)
 
-        self.assertEqual(e2.validator, "enum")
-        self.assertEqual(e2.validator_value, [2])
+        self.assertEqual(e2.checker, "enum")
+        self.assertEqual(e2.checker_value, [2])
         self.assertEqual(e2.instance, 1)
         self.assertEqual(e2.schema, {u"enum" : [2]})
         self.assertIs(e2.parent, e)
@@ -366,10 +366,10 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(e3.absolute_path, deque(["baz"]))
         self.assertEqual(e4.absolute_path, deque(["foo"]))
 
-        self.assertEqual(e1.validator, "minItems")
-        self.assertEqual(e2.validator, "enum")
-        self.assertEqual(e3.validator, "maximum")
-        self.assertEqual(e4.validator, "type")
+        self.assertEqual(e1.checker, "minItems")
+        self.assertEqual(e2.checker, "enum")
+        self.assertEqual(e3.checker, "maximum")
+        self.assertEqual(e4.checker, "type")
 
     def test_multiple_nesting(self):
         instance = [1, {"foo" : 2, "bar" : {"baz" : [1]}}, "quux"]
@@ -418,12 +418,12 @@ class TestValidationErrorDetails(unittest.TestCase):
             list(e6.schema_path), ["items", "properties", "foo", "enum"],
         )
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e2.validator, "type")
-        self.assertEqual(e3.validator, "type")
-        self.assertEqual(e4.validator, "required")
-        self.assertEqual(e5.validator, "minItems")
-        self.assertEqual(e6.validator, "enum")
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e2.checker, "type")
+        self.assertEqual(e3.checker, "type")
+        self.assertEqual(e4.checker, "required")
+        self.assertEqual(e5.checker, "minItems")
+        self.assertEqual(e6.checker, "enum")
 
     def test_additionalProperties(self):
         instance = {"bar": "bar", "foo": 2}
@@ -438,8 +438,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(e1.path, deque(["bar"]))
         self.assertEqual(e2.path, deque(["foo"]))
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e2.validator, "minimum")
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e2.checker, "minimum")
 
     def test_patternProperties(self):
         instance = {"bar": 1, "foo": 2}
@@ -457,8 +457,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(e1.path, deque(["bar"]))
         self.assertEqual(e2.path, deque(["foo"]))
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e2.validator, "minimum")
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e2.checker, "minimum")
 
     def test_additionalItems(self):
         instance = ["foo", 1]
@@ -474,8 +474,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(e1.path, deque([0]))
         self.assertEqual(e2.path, deque([1]))
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e2.validator, "minimum")
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e2.checker, "minimum")
 
     def test_additionalItems_with_items(self):
         instance = ["foo", "bar", 1]
@@ -491,8 +491,8 @@ class TestValidationErrorDetails(unittest.TestCase):
         self.assertEqual(e1.path, deque([1]))
         self.assertEqual(e2.path, deque([2]))
 
-        self.assertEqual(e1.validator, "type")
-        self.assertEqual(e2.validator, "minimum")
+        self.assertEqual(e1.checker, "type")
+        self.assertEqual(e2.checker, "minimum")
 
 
 class ValidatorTestMixin(object):
@@ -500,26 +500,26 @@ class ValidatorTestMixin(object):
         self.instance = mock.Mock()
         self.schema = {}
         self.resolver = mock.Mock()
-        self.validator = self.validator_class(self.schema)
+        self.checker = self.validator_class(self.schema)
 
     def test_valid_instances_are_valid(self):
         errors = iter([])
 
         with mock.patch.object(
-            self.validator, "iter_errors", return_value=errors,
+            self.checker, "iter_errors", return_value=errors,
         ):
             self.assertTrue(
-                self.validator.is_valid(self.instance, self.schema)
+                self.checker.is_valid(self.instance, self.schema)
             )
 
     def test_invalid_instances_are_not_valid(self):
         errors = iter([mock.Mock()])
 
         with mock.patch.object(
-            self.validator, "iter_errors", return_value=errors,
+            self.checker, "iter_errors", return_value=errors,
         ):
             self.assertFalse(
-                self.validator.is_valid(self.instance, self.schema)
+                self.checker.is_valid(self.instance, self.schema)
             )
 
     def test_non_existent_properties_are_ignored(self):
@@ -527,7 +527,7 @@ class ValidatorTestMixin(object):
         validate(instance=instance, schema={my_property : my_value})
 
     def test_it_creates_a_ref_resolver_if_not_provided(self):
-        self.assertIsInstance(self.validator.resolver, RefResolver)
+        self.assertIsInstance(self.checker.resolver, RefResolver)
 
     def test_it_delegates_to_a_ref_resolver(self):
         resolver = RefResolver("", {})
@@ -545,29 +545,29 @@ class ValidatorTestMixin(object):
         resolve.assert_called_once_with(schema["$ref"])
 
     def test_is_type_is_true_for_valid_type(self):
-        self.assertTrue(self.validator.is_type("foo", "string"))
+        self.assertTrue(self.checker.is_type("foo", "string"))
 
     def test_is_type_is_false_for_invalid_type(self):
-        self.assertFalse(self.validator.is_type("foo", "array"))
+        self.assertFalse(self.checker.is_type("foo", "array"))
 
     def test_is_type_evades_bool_inheriting_from_int(self):
-        self.assertFalse(self.validator.is_type(True, "integer"))
-        self.assertFalse(self.validator.is_type(True, "number"))
+        self.assertFalse(self.checker.is_type(True, "integer"))
+        self.assertFalse(self.checker.is_type(True, "number"))
 
     def test_is_type_raises_exception_for_unknown_type(self):
         with self.assertRaises(UnknownType):
-            self.validator.is_type("foo", object())
+            self.checker.is_type("foo", object())
 
 
 class TestDraft3Validator(ValidatorTestMixin, unittest.TestCase):
     validator_class = Draft3Validator
 
     def test_is_type_is_true_for_any_type(self):
-        self.assertTrue(self.validator.is_valid(mock.Mock(), {"type": "any"}))
+        self.assertTrue(self.checker.is_valid(mock.Mock(), {"type": "any"}))
 
     def test_is_type_does_not_evade_bool_if_it_is_being_tested(self):
-        self.assertTrue(self.validator.is_type(True, "boolean"))
-        self.assertTrue(self.validator.is_valid(True, {"type": "any"}))
+        self.assertTrue(self.checker.is_type(True, "boolean"))
+        self.assertTrue(self.checker.is_valid(True, {"type": "any"}))
 
     def test_non_string_custom_types(self):
         schema = {'type': [None]}

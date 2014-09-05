@@ -12,9 +12,9 @@ Creating or Extending Validators
 
     :argument dict meta_schema: the meta schema for the new validator class
 
-    :argument dict validators: a mapping from validator names to functions that
+    :argument dict checkers: a mapping from checker names to functions that
         validate the given name. Each function should take 4 arguments: a
-        validator instance, the value of the current validator property in the
+        checker instance, the value of the current checker's property in the
         instance being validated, the instance, and the schema.
 
     :argument str version: an identifier for the version that this validator
@@ -36,17 +36,17 @@ Creating or Extending Validators
 
     :argument jsonschema.IValidator validator: an existing validator class
 
-    :argument dict validators: a set of new validators to add to the new
+    :argument dict checkers: a set of new checkers to add to the new
         validator.
 
         .. note::
 
-            Any validators with the same name as an existing one will
-            (silently) replace the old validator entirely.
+            Any checkers with the same name as an existing one will
+            (silently) replace the old checker entirely.
 
-            If you wish to extend an old validator, call it directly in the
-            replacing validator function by retrieving it using
-            ``OldValidator.VALIDATORS["the validator"]``.
+            If you wish to extend an old checker, call it directly in the
+            replacing checker function by retrieving it using
+            ``OldValidator.CHECKERS["the checker"]``.
 
     :argument str version: a version for the new validator
 
