@@ -8,61 +8,61 @@ from jsonschema.compat import iteritems
 FLOAT_TOLERANCE = 10 ** -15
 
 
-def patternProperties(checker, patternProperties, instance, schema):
-    if not checker.is_type(instance, "object"):
+def patternProperties(rule, patternProperties, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
 
     for pattern, subschema in iteritems(patternProperties):
         for k, v in iteritems(instance):
             if re.search(pattern, k):
-                for error in checker.descend(
+                for error in rule.descend(
                     v, subschema, path=k, schema_path=pattern,
                 ):
                     yield error
 
 
-def additionalProperties(checker, aP, instance, schema):
-    if not checker.is_type(instance, "object"):
+def additionalProperties(rule, aP, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
 
     extras = set(_utils.find_additional_properties(instance, schema))
 
-    if checker.is_type(aP, "object"):
+    if rule.is_type(aP, "object"):
         for extra in extras:
-            for error in checker.descend(instance[extra], aP, path=extra):
+            for error in rule.descend(instance[extra], aP, path=extra):
                 yield error
     elif not aP and extras:
         error = "Additional properties are not allowed (%s %s unexpected)"
         yield ValidationError(error % _utils.extras_msg(extras))
 
 
-def items(checker, items, instance, schema):
-    if not checker.is_type(instance, "array"):
+def items(rule, items, instance, schema):
+    if not rule.is_type(instance, "array"):
         return
 
-    if checker.is_type(items, "object"):
+    if rule.is_type(items, "object"):
         for index, item in enumerate(instance):
-            for error in checker.descend(item, items, path=index):
+            for error in rule.descend(item, items, path=index):
                 yield error
     else:
         for (index, item), subschema in zip(enumerate(instance), items):
-            for error in checker.descend(
+            for error in rule.descend(
                 item, subschema, path=index, schema_path=index,
             ):
                 yield error
 
 
-def additionalItems(checker, aI, instance, schema):
+def additionalItems(rule, aI, instance, schema):
     if (
-        not checker.is_type(instance, "array") or
-        checker.is_type(schema.get("items", {}), "object")
+        not rule.is_type(instance, "array") or
+        rule.is_type(schema.get("items", {}), "object")
     ):
         return
 
     len_items = len(schema.get("items", []))
-    if checker.is_type(aI, "object"):
+    if rule.is_type(aI, "object"):
         for index, item in enumerate(instance[len_items:], start=len_items):
-            for error in checker.descend(item, aI, path=index):
+            for error in rule.descend(item, aI, path=index):
                 yield error
     elif not aI and len(instance) > len(schema.get("items", [])):
         error = "Additional items are not allowed (%s %s unexpected)"
@@ -72,8 +72,8 @@ def additionalItems(checker, aI, instance, schema):
         )
 
 
-def minimum(checker, minimum, instance, schema):
-    if not checker.is_type(instance, "number"):
+def minimum(rule, minimum, instance, schema):
+    if not rule.is_type(instance, "number"):
         return
 
     if schema.get("exclusiveMinimum", False):
@@ -89,8 +89,8 @@ def minimum(checker, minimum, instance, schema):
         )
 
 
-def maximum(checker, maximum, instance, schema):
-    if not checker.is_type(instance, "number"):
+def maximum(rule, maximum, instance, schema):
+    if not rule.is_type(instance, "number"):
         return
 
     if schema.get("exclusiveMaximum", False):
@@ -106,8 +106,8 @@ def maximum(checker, maximum, instance, schema):
         )
 
 
-def multipleOf(checker, dB, instance, schema):
-    if not checker.is_type(instance, "number"):
+def multipleOf(rule, dB, instance, schema):
+    if not rule.is_type(instance, "number"):
         return
 
     if isinstance(dB, float):
@@ -120,61 +120,61 @@ def multipleOf(checker, dB, instance, schema):
         yield ValidationError("%r is not a multiple of %r" % (instance, dB))
 
 
-def minItems(checker, mI, instance, schema):
-    if checker.is_type(instance, "array") and len(instance) < mI:
+def minItems(rule, mI, instance, schema):
+    if rule.is_type(instance, "array") and len(instance) < mI:
         yield ValidationError("%r is too short" % (instance,))
 
 
-def maxItems(checker, mI, instance, schema):
-    if checker.is_type(instance, "array") and len(instance) > mI:
+def maxItems(rule, mI, instance, schema):
+    if rule.is_type(instance, "array") and len(instance) > mI:
         yield ValidationError("%r is too long" % (instance,))
 
 
-def uniqueItems(checker, uI, instance, schema):
+def uniqueItems(rule, uI, instance, schema):
     if (
         uI and
-        checker.is_type(instance, "array") and
+        rule.is_type(instance, "array") and
         not _utils.uniq(instance)
     ):
         yield ValidationError("%r has non-unique elements" % instance)
 
 
-def pattern(checker, patrn, instance, schema):
+def pattern(rule, patrn, instance, schema):
     if (
-        checker.is_type(instance, "string") and
+        rule.is_type(instance, "string") and
         not re.search(patrn, instance)
     ):
         yield ValidationError("%r does not match %r" % (instance, patrn))
 
 
-def format(checker, format, instance, schema):
-    if checker.format_checker is not None:
+def format(rule, format, instance, schema):
+    if rule.format_checker is not None:
         try:
-            checker.format_checker.check(instance, format)
+            rule.format_checker.check(instance, format)
         except FormatError as error:
             yield ValidationError(error.message, cause=error.cause)
 
 
-def minLength(checker, mL, instance, schema):
-    if checker.is_type(instance, "string") and len(instance) < mL:
+def minLength(rule, mL, instance, schema):
+    if rule.is_type(instance, "string") and len(instance) < mL:
         yield ValidationError("%r is too short" % (instance,))
 
 
-def maxLength(checker, mL, instance, schema):
-    if checker.is_type(instance, "string") and len(instance) > mL:
+def maxLength(rule, mL, instance, schema):
+    if rule.is_type(instance, "string") and len(instance) > mL:
         yield ValidationError("%r is too long" % (instance,))
 
 
-def dependencies(checker, dependencies, instance, schema):
-    if not checker.is_type(instance, "object"):
+def dependencies(rule, dependencies, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
 
     for prop, dependency in iteritems(dependencies):
         if prop not in instance:
             continue
 
-        if checker.is_type(dependency, "object"):
-            for error in checker.descend(
+        if rule.is_type(dependency, "object"):
+            for error in rule.descend(
                 instance, dependency, schema_path=prop,
             ):
                 yield error
@@ -187,31 +187,31 @@ def dependencies(checker, dependencies, instance, schema):
                     )
 
 
-def enum(checker, enums, instance, schema):
+def enum(rule, enums, instance, schema):
     if instance not in enums:
         yield ValidationError("%r is not one of %r" % (instance, enums))
 
 
-def ref(checker, ref, instance, schema):
-    with checker.resolver.resolving(ref) as resolved:
-        for error in checker.descend(instance, resolved):
+def ref(rule, ref, instance, schema):
+    with rule.resolver.resolving(ref) as resolved:
+        for error in rule.descend(instance, resolved):
             yield error
 
 
-def type_draft3(checker, jstypes, instance, schema):
+def type_draft3(rule, jstypes, instance, schema):
     jstypes = _utils.ensure_list(jstypes)
 
     all_errors = []
     for index, jstype in enumerate(jstypes):
         if jstype == "any":
             return
-        if checker.is_type(jstype, "object"):
-            errors = list(checker.descend(instance, jstype, schema_path=index))
+        if rule.is_type(jstype, "object"):
+            errors = list(rule.descend(instance, jstype, schema_path=index))
             if not errors:
                 return
             all_errors.extend(errors)
         else:
-            if checker.is_type(instance, jstype):
+            if rule.is_type(instance, jstype):
                 return
     else:
         yield ValidationError(
@@ -219,13 +219,13 @@ def type_draft3(checker, jstypes, instance, schema):
         )
 
 
-def properties_draft3(checker, properties, instance, schema):
-    if not checker.is_type(instance, "object"):
+def properties_draft3(rule, properties, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
 
     for prop, subschema in iteritems(properties):
         if prop in instance:
-            for error in checker.descend(
+            for error in rule.descend(
                 instance[prop],
                 subschema,
                 path=prop,
@@ -235,8 +235,8 @@ def properties_draft3(checker, properties, instance, schema):
         elif subschema.get("required", False):
             error = ValidationError("%r is a required property" % prop)
             error._set(
-                checker="required",
-                checker_value=subschema["required"],
+                rule="required",
+                rule_value=subschema["required"],
                 instance=instance,
                 schema=schema,
             )
@@ -245,38 +245,38 @@ def properties_draft3(checker, properties, instance, schema):
             yield error
 
 
-def disallow_draft3(checker, disallow, instance, schema):
+def disallow_draft3(rule, disallow, instance, schema):
     for disallowed in _utils.ensure_list(disallow):
-        if checker.is_valid(instance, {"type" : [disallowed]}):
+        if rule.is_valid(instance, {"type" : [disallowed]}):
             yield ValidationError(
                 "%r is disallowed for %r" % (disallowed, instance)
             )
 
 
-def extends_draft3(checker, extends, instance, schema):
-    if checker.is_type(extends, "object"):
-        for error in checker.descend(instance, extends):
+def extends_draft3(rule, extends, instance, schema):
+    if rule.is_type(extends, "object"):
+        for error in rule.descend(instance, extends):
             yield error
         return
     for index, subschema in enumerate(extends):
-        for error in checker.descend(instance, subschema, schema_path=index):
+        for error in rule.descend(instance, subschema, schema_path=index):
             yield error
 
 
-def type_draft4(checker, jstypes, instance, schema):
+def type_draft4(rule, jstypes, instance, schema):
     jstypes = _utils.ensure_list(jstypes)
 
-    if not any(checker.is_type(instance, jstype) for jstype in jstypes):
+    if not any(rule.is_type(instance, jstype) for jstype in jstypes):
         yield ValidationError(_utils.types_missmatch_msg(instance, jstypes))
 
 
-def properties_draft4(checker, properties, instance, schema):
-    if not checker.is_type(instance, "object"):
+def properties_draft4(rule, properties, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
 
     for prop, subschema in iteritems(properties):
         if prop in instance:
-            for error in checker.descend(
+            for error in rule.descend(
                 instance[prop],
                 subschema,
                 path=prop,
@@ -285,39 +285,39 @@ def properties_draft4(checker, properties, instance, schema):
                 yield error
 
 
-def required_draft4(checker, required, instance, schema):
-    if not checker.is_type(instance, "object"):
+def required_draft4(rule, required, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
     for prop in required:
         if prop not in instance:
             yield ValidationError("%r is a required property" % prop)
 
 
-def minProperties_draft4(checker, mP, instance, schema):
-    if checker.is_type(instance, "object") and len(instance) < mP:
+def minProperties_draft4(rule, mP, instance, schema):
+    if rule.is_type(instance, "object") and len(instance) < mP:
         yield ValidationError(
             "%r does not have enough properties" % (instance,)
         )
 
 
-def maxProperties_draft4(checker, mP, instance, schema):
-    if not checker.is_type(instance, "object"):
+def maxProperties_draft4(rule, mP, instance, schema):
+    if not rule.is_type(instance, "object"):
         return
-    if checker.is_type(instance, "object") and len(instance) > mP:
+    if rule.is_type(instance, "object") and len(instance) > mP:
         yield ValidationError("%r has too many properties" % (instance,))
 
 
-def allOf_draft4(checker, allOf, instance, schema):
+def allOf_draft4(rule, allOf, instance, schema):
     for index, subschema in enumerate(allOf):
-        for error in checker.descend(instance, subschema, schema_path=index):
+        for error in rule.descend(instance, subschema, schema_path=index):
             yield error
 
 
-def oneOf_draft4(checker, oneOf, instance, schema):
+def oneOf_draft4(rule, oneOf, instance, schema):
     subschemas = enumerate(oneOf)
     all_errors = []
     for index, subschema in subschemas:
-        errs = list(checker.descend(instance, subschema, schema_path=index))
+        errs = list(rule.descend(instance, subschema, schema_path=index))
         if not errs:
             first_valid = subschema
             break
@@ -328,7 +328,7 @@ def oneOf_draft4(checker, oneOf, instance, schema):
             context=all_errors,
         )
 
-    more_valid = [s for _, s in subschemas if checker.is_valid(instance, s)]
+    more_valid = [s for _, s in subschemas if rule.is_valid(instance, s)]
     if more_valid:
         more_valid.append(first_valid)
         reprs = ", ".join(repr(schema) for schema in more_valid)
@@ -337,10 +337,10 @@ def oneOf_draft4(checker, oneOf, instance, schema):
         )
 
 
-def anyOf_draft4(checker, anyOf, instance, schema):
+def anyOf_draft4(rule, anyOf, instance, schema):
     all_errors = []
     for index, subschema in enumerate(anyOf):
-        errs = list(checker.descend(instance, subschema, schema_path=index))
+        errs = list(rule.descend(instance, subschema, schema_path=index))
         if not errs:
             break
         all_errors.extend(errs)
@@ -351,8 +351,8 @@ def anyOf_draft4(checker, anyOf, instance, schema):
         )
 
 
-def not_draft4(checker, not_schema, instance, schema):
-    if checker.is_valid(instance, not_schema):
+def not_draft4(rule, not_schema, instance, schema):
+    if rule.is_valid(instance, not_schema):
         yield ValidationError(
             "%r is not allowed for %r" % (not_schema, instance)
         )

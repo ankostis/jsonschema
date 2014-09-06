@@ -24,9 +24,9 @@ raised or returned, depending on which method or function is used.
 
                                         :attr:`schema_path`
 
-                                        :attr:`checker`
+                                        :attr:`rule`
 
-                                        :attr:`checker_value`
+                                        :attr:`rule_value`
     ===============  =================  ========================
 
 
@@ -34,32 +34,32 @@ raised or returned, depending on which method or function is used.
 
         A human readable message explaining the error.
 
-    .. attribute:: checker
+    .. attribute:: rule
 
-        The failed `checker
+        The failed `rule
         <http://json-schema.org/latest/json-schema-validation.html#anchor12>`_.
 
-    .. attribute:: checker_value
+    .. attribute:: rule_value
 
-        The value for the failed checker in the schema.
+        The value for the failed rule in the schema.
 
     .. attribute:: schema
 
         The full schema that this error came from. This is potentially a
-        subschema from within the schema that was passed into the checker, or
-        even an entirely different schema if a :validator:`$ref` was followed.
+        subschema from within the schema that was passed into the rule, or
+        even an entirely different schema if a :rule:`$ref` was followed.
 
     .. attribute:: relative_schema_path
 
         A :class:`collections.deque` containing the path to the failed
-        checker within the schema.
+        rule within the schema.
 
     .. attribute:: absolute_schema_path
 
         A :class:`collections.deque` containing the path to the failed
-        checker within the schema, but always relative to the
+        rule within the schema, but always relative to the
         *original* schema as opposed to any subschema (i.e. the one
-        originally passed into a checker, *not* :attr:`schema`\).
+        originally passed into a rule, *not* :attr:`schema`\).
 
     .. attribute:: schema_path
 
@@ -104,7 +104,7 @@ raised or returned, depending on which method or function is used.
 
         If the error was caused by a *non*-validation error, the exception
         object will be here. Currently this is only used for the exception
-        raised by a failed format checker in :meth:`FormatChecker.check`.
+        raised by a failed format rule in :meth:`FormatChecker.check`.
 
     .. attribute:: parent
 
@@ -174,7 +174,7 @@ the specific part of the instance and subschema that caused each of the errors.
 This can be seen with the :attr:`~ValidationError.instance` and
 :attr:`~ValidationError.schema` attributes.
 
-With checkers like :checker:`anyOf`, the :attr:`~ValidationError.context`
+With rules like :rule:`anyOf`, the :attr:`~ValidationError.context`
 attribute can be used to see the sub-errors which caused the failure. Since
 these errors actually came from two separate subschemas, it can be helpful to
 look at the :attr:`~ValidationError.schema_path` attribute as well to see where
@@ -219,7 +219,7 @@ easier debugging.
 ErrorTrees
 ----------
 
-If you want to programmatically be able to query which properties or checkers
+If you want to programmatically be able to query which properties or rules
 failed when validating a given instance, you probably will want to do so using
 :class:`ErrorTree` objects.
 
@@ -230,7 +230,7 @@ failed when validating a given instance, you probably will want to do so using
 
     .. attribute:: errors
 
-        The mapping of validator names to the error objects (usually
+        The mapping of rule names to the error objects (usually
         :class:`ValidationError`\s) at this level of the tree.
 
 Consider the following example:
@@ -293,7 +293,7 @@ the :attr:`~ErrorTree.errors` attribute.
     >>> sorted(tree[0].errors)
     ['enum', 'type']
 
-Here we see that the :validator:`enum` and :validator:`type` checkers failed
+Here we see that the :rule:`enum` and :rule:`type` rules failed
 for index ``0``. In fact :attr:`~ErrorTree.errors` is a dict, whose values are
 the :class:`ValidationError`\s, so we can get at those directly if we want
 them.
@@ -303,7 +303,7 @@ them.
     >>> print(tree[0].errors["type"].message)
     'spam' is not of type 'number'
 
-Of course this means that if we want to know if a given checker failed for a
+Of course this means that if we want to know if a given rule failed for a
 given index, we check for its presence in :attr:`~ErrorTree.errors`:
 
 .. doctest::
@@ -315,8 +315,8 @@ given index, we check for its presence in :attr:`~ErrorTree.errors`:
     False
 
 Finally, if you were paying close enough attention, you'll notice that we
-haven't seen our :validator:`minItems` error appear anywhere yet. This is
-because :validator:`minItems` is an error that applies globally to the instance
+haven't seen our :rule:`minItems` error appear anywhere yet. This is
+because :rule:`minItems` is an error that applies globally to the instance
 itself. So it appears in the root node of the tree.
 
 .. doctest::
@@ -329,7 +329,7 @@ That's all you need to know to use error trees.
 To summarize, each tree contains child trees that can be accessed by indexing
 the tree to get the corresponding child tree for a given index into the
 instance. Each tree and child has a :attr:`~ErrorTree.errors` attribute, a
-dict, that maps the failed checker to the corresponding validation error.
+dict, that maps the failed rule to the corresponding validation error.
 
 
 best_match and relevance
@@ -359,9 +359,9 @@ to guess the most relevant error in a given bunch.
     :attr:`ValidationError.path` is shorter) are considered better matches,
     since they indicate "more" is wrong with the instance.
 
-    If the resulting match is either :validator:`oneOf` or :validator:`anyOf`,
+    If the resulting match is either :rule:`oneOf` or :rule:`anyOf`,
     the *opposite* assumption is made -- i.e. the deepest error is picked,
-    since these checkers only need to match once, and any other errors may
+    since these rules only need to match once, and any other errors may
     not be relevant.
 
     :argument iterable errors: the errors to select from. Do not provide a
@@ -391,12 +391,12 @@ to guess the most relevant error in a given bunch.
     :func:`sorted` or :func:`max` will cause more relevant errors to be
     considered greater than less relevant ones.
 
-    Within the different checkers that can fail, this function
-    considers :validator:`anyOf` and :validator:`oneOf` to be *weak*
-    validation errors, and will sort them lower than other checkers at
+    Within the different rules that can fail, this function
+    considers :rule:`anyOf` and :rule:`oneOf` to be *weak*
+    validation errors, and will sort them lower than other rules at
     the same level in the instance.
 
-    If you want to change the set of weak [or strong] checkers you can create
+    If you want to change the set of weak [or strong] rules you can create
     a custom version of this function with :func:`by_relevance` and provide a
     different set of each.
 
@@ -425,10 +425,10 @@ to guess the most relevant error in a given bunch.
 
     Create a key function that can be used to sort errors by relevance.
 
-    :argument set weak: a collection of checkers to consider to be "weak". If
+    :argument set weak: a collection of rules to consider to be "weak". If
         there are two errors at the same level of the instance and one is in
-        the set of weak checkers, the other error will take priority. By
-        default, :validator:`anyOf` and :validator:`oneOf` are considered weak
-        checkers and will be superceded by other same-level validation
+        the set of weak rules, the other error will take priority. By
+        default, :rule:`anyOf` and :rule:`oneOf` are considered weak
+        rules and will be superceded by other same-level validation
         errors.
-    :argument set strong: a collection of checkers to consider to be "strong"
+    :argument set strong: a collection of rules to consider to be "strong"

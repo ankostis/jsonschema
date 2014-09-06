@@ -17,11 +17,11 @@ class _Error(Exception):
     def __init__(
         self,
         message,
-        checker=_unset,
+        rule=_unset,
         path=(),
         cause=None,
         context=(),
-        checker_value=_unset,
+        rule_value=_unset,
         instance=_unset,
         schema=_unset,
         schema_path=(),
@@ -32,8 +32,8 @@ class _Error(Exception):
         self.schema_path = self.relative_schema_path = deque(schema_path)
         self.context = list(context)
         self.cause = self.__cause__ = cause
-        self.checker = checker
-        self.checker_value = checker_value
+        self.rule = rule
+        self.rule_value = rule_value
         self.instance = instance
         self.schema = schema
         self.parent = parent
@@ -49,7 +49,7 @@ class _Error(Exception):
 
     def __unicode__(self):
         essential_for_verbose = (
-            self.checker, self.checker_value, self.instance, self.schema,
+            self.rule, self.rule_value, self.instance, self.schema,
         )
         if any(m is _unset for m in essential_for_verbose):
             return self.message
@@ -65,7 +65,7 @@ class _Error(Exception):
             %s
             """.rstrip()
         ) % (
-            self.checker,
+            self.rule,
             _utils.format_as_index(list(self.relative_schema_path)[:-1]),
             _utils.indent(pschema),
             _utils.format_as_index(self.relative_path),
@@ -106,7 +106,7 @@ class _Error(Exception):
 
     def _contents(self):
         attrs = (
-            "message", "cause", "context", "checker", "checker_value",
+            "message", "cause", "context", "rule", "rule_value",
             "path", "schema_path", "instance", "schema", "parent",
         )
         return dict((attr, getattr(self, attr)) for attr in attrs)
@@ -137,7 +137,7 @@ class UnknownType(Exception):
         pschema = pprint.pformat(self.schema, width=72)
         pinstance = pprint.pformat(self.instance, width=72)
         return textwrap.dedent("""
-            Unknown type %r for checker with schema:
+            Unknown type %r for rule with schema:
             %s
 
             While checking instance:
@@ -182,7 +182,7 @@ class ErrorTree(object):
             container = self
             for element in error.path:
                 container = container[element]
-            container.errors[error.checker] = error
+            container.errors[error.rule] = error
 
             self._instance = error.instance
 
@@ -244,8 +244,8 @@ class ErrorTree(object):
 
 def by_relevance(weak=WEAK_MATCHES, strong=STRONG_MATCHES):
     def relevance(error):
-        checker = error.checker
-        return -len(error.path), checker not in weak, checker in strong
+        rule = error.rule
+        return -len(error.path), rule not in weak, rule in strong
     return relevance
 
 

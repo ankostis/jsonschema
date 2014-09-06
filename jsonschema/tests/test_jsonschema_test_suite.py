@@ -144,7 +144,7 @@ def missing_format(checker):
     def missing_format(case, test):
         format = case["schema"].get("format")
         if format not in checker.checkers:
-            return "Format checker {0!r} not found.".format(format)
+            return "Format validator {0!r} not found.".format(format)
         elif (
             format == "date-time" and
             pypy_version_info is not None and
@@ -174,10 +174,10 @@ class FormatMixin(object):
 
         validator.validate("bar")
 
-        checker.check.assert_called_once_with("bar", "foo")
+        validator.check.assert_called_once_with("bar", "foo")
 
         cause = ValueError()
-        checker.check.side_effect = FormatError('aoeu', cause=cause)
+        validator.check.side_effect = FormatError('aoeu', cause=cause)
 
         with self.assertRaises(ValidationError) as cm:
             validator.validate("bar")
@@ -192,10 +192,10 @@ class FormatMixin(object):
 
         validator.validate([1, 2, 3])
 
-        checker.check.assert_called_once_with([1, 2, 3], "foo")
+        validator.check.assert_called_once_with([1, 2, 3], "foo")
 
         cause = ValueError()
-        checker.check.side_effect = FormatError('aoeu', cause=cause)
+        validator.check.side_effect = FormatError('aoeu', cause=cause)
 
         with self.assertRaises(ValidationError) as cm:
             validator.validate([1, 2, 3])

@@ -32,7 +32,7 @@ def setup(app):
 
     path = os.path.join(app.config.cache_path, "spec.html")
     spec = fetch_or_load(path)
-    app.add_role("validator", docutils_sucks(spec))
+    app.add_role("rule", docutils_sucks(spec))
 
 
 def fetch_or_load(spec_path):
@@ -79,9 +79,9 @@ def docutils_sucks(spec):
     ref_url = "http://json-schema.org/latest/json-schema-core.html#anchor25"
     schema_url = "http://json-schema.org/latest/json-schema-core.html#anchor22"
 
-    def validator(name, raw_text, text, lineno, inliner):
+    def rule(name, raw_text, text, lineno, inliner):
         """
-        Link to the JSON Schema documentation for a validator.
+        Link to the JSON Schema documentation for a rule.
 
         :argument str name: the name of the role in the document
         :argument str raw_source: the raw text (role with argument)
@@ -120,4 +120,4 @@ def docutils_sucks(spec):
         reference = nodes.reference(raw_text, text, refuri=uri)
         return [reference], []
 
-    return validator
+    return rule

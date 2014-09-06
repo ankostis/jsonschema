@@ -21,7 +21,7 @@ from jsonschema.exceptions import RefResolutionError, SchemaError, UnknownType
 
 _unset = _utils.Unset()
 
-checkers = {}
+validators = {}
 meta_schemas = _utils.URIDict()
 
 
@@ -29,7 +29,7 @@ def validates(version):
     """
     Register the decorated validator for a ``version`` of the specification.
 
-    Registered checkers and their meta schemas will be considered when
+    Registered validators and their meta schemas will be considered when
     parsing ``$schema`` properties' URIs.
 
     :argument str version: an identifier to use as the version's name
@@ -38,14 +38,14 @@ def validates(version):
     """
 
     def _validates(cls):
-        checkers[version] = cls
+        validators[version] = cls
         if u"id" in cls.META_SCHEMA:
             meta_schemas[cls.META_SCHEMA[u"id"]] = cls
         return cls
     return _validates
 
 
-def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
+def create(meta_schema, rules=(), version=None, default_types=None):  # noqa
     if default_types is None:
         default_types = {
             u"array" : list, u"boolean" : bool, u"integer" : int_types,
@@ -54,7 +54,7 @@ def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
         }
 
     class Validator(object):
-        CHECKERS = dict(checkers)
+        RULES = dict(rules)
         META_SCHEMA = dict(meta_schema)
         DEFAULT_TYPES = dict(default_types)
 
@@ -83,12 +83,12 @@ def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
             with self.resolver.in_scope(_schema.get(u"id", u"")):
                 ref = _schema.get(u"$ref")
                 if ref is not None:
-                    checkers = [(u"$ref", ref)]
+                    rules = [(u"$ref", ref)]
                 else:
-                    checkers = iteritems(_schema)
+                    rules = iteritems(_schema)
 
-                for k, v in checkers:
-                    validator = self.CHECKERS.get(k)
+                for k, v in rules:
+                    validator = self.RULES.get(k)
                     if validator is None:
                         continue
 
@@ -96,8 +96,8 @@ def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
                     for error in errors:
                         # set details if not already set by the called fn
                         error._set(
-                            checker=k,
-                            checker_value=v,
+                            rule=k,
+                            rule_value=v,
                             instance=instance,
                             schema=_schema,
                         )
@@ -144,12 +144,12 @@ def create(meta_schema, checkers=(), version=None, default_types=None):  # noqa
     return Validator
 
 
-def extend(validator, checkers, version=None):
-    all_checkers = dict(validator.CHECKERS)
-    all_checkers.update(checkers)
+def extend(validator, rules, version=None):
+    all_rules = dict(validator.RULES)
+    all_rules.update(rules)
     return create(
         meta_schema=validator.META_SCHEMA,
-        checkers=all_checkers,
+        rules=all_rules,
         version=version,
         default_types=validator.DEFAULT_TYPES,
     )
@@ -157,7 +157,7 @@ def extend(validator, checkers, version=None):
 
 Draft3Validator = create(
     meta_schema=_utils.load_schema("draft3"),
-    checkers={
+    rules={
         u"$ref" : _rules.ref,
         u"additionalItems" : _rules.additionalItems,
         u"additionalProperties" : _rules.additionalProperties,
@@ -186,7 +186,7 @@ Draft3Validator = create(
 
 Draft4Validator = create(
     meta_schema=_utils.load_schema("draft4"),
-    checkers={
+    rules={
         u"$ref" : _rules.ref,
         u"additionalItems" : _rules.additionalItems,
         u"additionalProperties" : _rules.additionalProperties,
@@ -407,10 +407,10 @@ def validate(instance, schema, cls=None, *args, **kwargs):
 
     If the ``cls`` argument is not provided, two things will happen in
     accordance with the specification. First, if the schema has a
-    :validator:`$schema` property containing a known meta-schema [#]_ then the
+    :rule:`$schema` property containing a known meta-schema [#]_ then the
     proper validator will be used.  The specification recommends that all
-    schemas contain :validator:`$schema` properties for this reason. If no
-    :validator:`$schema` property is found, the default validator class is
+    schemas contain :rule:`$schema` properties for this reason. If no
+    :rule:`$schema` property is found, the default validator class is
     :class:`Draft4Validator`.
 
     Any other provided positional and keyword arguments will be passed on when

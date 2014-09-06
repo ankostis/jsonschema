@@ -46,7 +46,7 @@ Creating or Extending Validators
 
             If you wish to extend an old checker, call it directly in the
             replacing checker function by retrieving it using
-            ``OldValidator.CHECKERS["the checker"]``.
+            ``OldValidator.RULES["the checker"]``.
 
     :argument str version: a version for the new validator
 
@@ -68,7 +68,7 @@ Creating or Extending Validators
 
     Retrieve the validator appropriate for validating the given schema.
 
-    Uses the :validator:`$schema` property that should be present in the given
+    Uses the :rule:`$schema` property that should be present in the given
     schema to look up the appropriate validator.
 
     :argument schema: the schema to look at

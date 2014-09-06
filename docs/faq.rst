@@ -7,11 +7,11 @@ Why doesn't my schema that has a default property actually set the default on my
 ------------------------------------------------------------------------------------------
 
 The basic answer is that the specification does not require that
-:validator:`default` actually do anything.
+:rule:`default` actually do anything.
 
 For an inkling as to *why* it doesn't actually do anything, consider that none
-of the other checkers modify the instance either. More importantly, having
-:validator:`default` modify the instance can produce quite peculiar things.
+of the other rules modify the instance either. More importantly, having
+:rule:`default` modify the instance can produce quite peculiar things.
 It's perfectly valid (and perhaps even useful) to have a default that is not
 valid under the schema it lives in! So an instance modified by the default
 would pass validation the first time, but fail the second!
@@ -27,11 +27,11 @@ started:
 
 
         def extend_with_default(validator_class):
-            check_properties = validator_class.CHECKERS["properties"]
+            check_properties = validator_class.RULES["properties"]
 
-            def set_defaults(checker, properties, instance, schema):
+            def set_defaults(rule, properties, instance, schema):
                 for error in check_properties(
-                    checker, properties, instance, schema,
+                    rule, properties, instance, schema,
                 ):
                     yield error
 
@@ -57,7 +57,7 @@ started:
 
 
 See the above-linked document for more info on how this works, but basically,
-it just extends the :validator:`properties` checker on a
+it just extends the :rule:`properties` rule on a
 :class:`Draft4Validator` to then go ahead and update all the defaults.
 
 If you're interested in a more interesting solution to a larger class of these

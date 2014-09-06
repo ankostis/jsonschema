@@ -8,7 +8,7 @@ from jsonschema.exceptions import FormatError
 
 class FormatChecker(object):
     """
-    A ``format`` property checker.
+    A ``format`` rule.
 
     JSON Schema does not mandate that the ``format`` property actually do any
     validation. If validation is desired however, instances of this class can

@@ -34,32 +34,32 @@ adhere to.
                            :meth:`IValidator.check_schema` to validate a schema
                            first.
     :argument types: Override or extend the list of known types when validating
-                     the :validator:`type` property. Should map strings (type
+                     the :rule:`type` property. Should map strings (type
                      names) to class objects that will be checked via
                      :func:`isinstance`. See :ref:`validating-types` for
                      details.
     :type types: dict or iterable of 2-tuples
     :argument resolver: an instance of :class:`RefResolver` that will be used
-                        to resolve :validator:`$ref` properties (JSON
+                        to resolve :rule:`$ref` properties (JSON
                         references). If unprovided, one will be created.
     :argument format_checker: an instance of :class:`FormatChecker` whose
                               :meth:`~conforms` method will be called to check
                               and see if instances conform to each
-                              :validator:`format` property present in the
+                              :rule:`format` property present in the
                               schema. If unprovided, no validation will be done
-                              for :validator:`format`.
+                              for :rule:`format`.
 
     .. attribute:: DEFAULT_TYPES
 
         The default mapping of JSON types to Python types used when validating
-        :validator:`type` properties in JSON schemas.
+        :rule:`type` properties in JSON schemas.
 
     .. attribute:: META_SCHEMA
 
         An object representing the validator's meta schema (the schema that
         describes valid schemas in the given version).
 
-    .. attribute:: CHECKERS
+    .. attribute:: RULES
 
         A mapping of checkers (:class:`str`\s) to functions that check the
         schema property with that name. For more information see
@@ -136,7 +136,7 @@ Validating With Additional Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Occasionally it can be useful to provide additional or alternate types when
-validating the JSON Schema's :validator:`type` property. Validators allow this
+validating the JSON Schema's :rule:`type` property. Validators allow this
 by taking a ``types`` argument on construction that specifies additional types,
 or which can be used to specify a different set of Python types to map to a
 given JSON type.
@@ -211,7 +211,7 @@ Draft 4 meta-schema, you could use:
 Validating Formats
 ------------------
 
-JSON Schema defines the :validator:`format` property which can be used to check
+JSON Schema defines the :rule:`format` property which can be used to check
 if primitive types (``string``\s, ``number``\s, ``boolean``\s) conform to
 well-defined formats. By default, no validation is enforced, but optionally,
 validation can be enabled by hooking in a format-checking object into an
