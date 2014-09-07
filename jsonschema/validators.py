@@ -88,11 +88,11 @@ def create(meta_schema, rules=(), version=None, default_types=None):  # noqa
                     rules = iteritems(_schema)
 
                 for k, v in rules:
-                    validator = self.RULES.get(k)
-                    if validator is None:
+                    rule = self.RULES.get(k)
+                    if rule is None:
                         continue
 
-                    errors = validator(self, v, instance, _schema) or ()
+                    errors = rule(self, v, instance, _schema) or ()
                     for error in errors:
                         # set details if not already set by the called fn
                         error._set(
