@@ -61,7 +61,7 @@ adhere to.
 
     .. attribute:: RULES
 
-        A mapping of checkers (:class:`str`\s) to functions that check the
+        A mapping of rules (:class:`str`\s) to rule-functions that validate the
         schema property with that name. For more information see
         :ref:`creating-validators`.
 
