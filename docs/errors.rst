@@ -235,25 +235,24 @@ failed when validating a given instance, you probably will want to do so using
 
 Consider the following example:
 
-.. testcode::
+.. doctest::
 
-    schema = {
-        "type" : "array",
-        "items" : {"type" : "number", "enum" : [1, 2, 3]},
-        "minItems" : 3,
-    }
-    instance = ["spam", 2]
+    >>> from jsonschema.validators import Draft3Validator, ErrorTree
+
+    >>> schema = {
+    ...     "type" : "array",
+    ...     "items" : {"type" : "number", "enum" : [1, 2, 3]},
+    ...     "minItems" : 3,
+    ... }
+    >>> instance = ["spam", 2]
 
 For clarity's sake, the given instance has three errors under this schema:
 
-.. testcode::
+.. doctest::
 
-    v = Draft3Validator(schema)
-    for error in sorted(v.iter_errors(["spam", 2]), key=str):
-        print(error.message)
-
-.. testoutput::
-
+    >>> v = Draft3Validator(schema)
+    >>> for error in sorted(v.iter_errors(["spam", 2]), key=str):
+    ...     print(error.message)
     'spam' is not of type 'number'
     'spam' is not one of [1, 2, 3]
     ['spam', 2] is too short
@@ -261,9 +260,9 @@ For clarity's sake, the given instance has three errors under this schema:
 Let's construct an :class:`ErrorTree` so that we can query the errors a bit
 more easily than by just iterating over the error objects.
 
-.. testcode::
+.. doctest::
 
-    tree = ErrorTree(v.iter_errors(instance))
+    >>> tree = ErrorTree(v.iter_errors(instance))
 
 As you can see, :class:`ErrorTree` takes an iterable of
 :class:`ValidationError`\s when constructing a tree so you can directly pass it
@@ -341,7 +340,7 @@ to guess the most relevant error in a given bunch.
 .. doctest::
 
         >>> from jsonschema import Draft4Validator
-        >>> from jsonschema.exceptions import best_match
+        >>> from jsonschema.exceptions import best_match, relevance
 
         >>> schema = {
         ...     "type": "array",
@@ -416,7 +415,7 @@ to guess the most relevant error in a given bunch.
     >>> errors = Draft4Validator(schema).iter_errors(instance)
     >>> [
     ...     e.path[-1]
-    ...     for e in sorted(errors, key=exceptions.relevance)
+    ...     for e in sorted(errors, key=relevance)
     ... ]
     ['home', 'name']
 

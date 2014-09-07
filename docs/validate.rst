@@ -90,6 +90,10 @@ adhere to.
 
         :rtype: bool
 
+        .. doctest::
+
+            >>> from jsonschema import Draft3Validator
+
             >>> schema = {"maxItems" : 2}
             >>> Draft3Validator(schema).is_valid([2, 3, 4])
             False
@@ -99,6 +103,8 @@ adhere to.
         Lazily yield each of the validation errors in the given instance.
 
         :rtype: an iterable of :exc:`ValidationError`\s
+
+        .. doctest::
 
             >>> schema = {
             ...     "type" : "array",
@@ -117,11 +123,14 @@ adhere to.
 
         :raises: :exc:`ValidationError` if the instance is invalid
 
+        .. doctest::
+
             >>> schema = {"maxItems" : 2}
-            >>> Draft3Validator(schema).validate([2, 3, 4])
+            >>> Draft3Validator(schema).validate([2, 3, 4])                 # doctest: +ELLIPSIS,+IGNORE_EXCEPTION_DETAIL
             Traceback (most recent call last):
-                ...
+            ...
             ValidationError: [2, 3, 4] is too long
+            ...
 
 
 All of the :ref:`versioned validators <versioned-validators>` that are included
@@ -219,13 +228,17 @@ validation can be enabled by hooking in a format-checking object into an
 
 .. doctest::
 
-    >>> validate("localhost", {"format" : "hostname"})
-    >>> validate(
-    ...     "-12", {"format" : "hostname"}, format_checker=FormatChecker(),
-    ... )
+    >>> from jsonschema import Draft4Validator, FormatChecker
+
+    >>> v = Draft4Validator({"format" : "hostname"})
+    >>> v.validate("localhost")
+
+    >>> v = Draft4Validator({"format" : "hostname"}, format_checker=FormatChecker())
+    >>> v.validate("-12", {"format" : "hostname"})                      # doctest: +ELLIPSIS,+IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-        ...
-    ValidationError: "-12" is not a "hostname"
+    ...
+    ValidationError: '-12' is not a 'hostname'
+
 
 .. autoclass:: FormatChecker
     :members:
