@@ -2,7 +2,7 @@ from collections import deque
 from contextlib import contextmanager
 import json
 
-from jsonschema import FormatChecker, ValidationError
+from jsonschema import FormatChecker, ValidationError, _utils
 from jsonschema.tests.compat import mock, unittest
 from jsonschema.validators import (
     RefResolutionError, UnknownType, Draft3Validator,
@@ -72,6 +72,37 @@ class TestCreateAndExtend(unittest.TestCase):
 
         self.assertEqual(Extended.META_SCHEMA, self.Validator.META_SCHEMA)
         self.assertEqual(Extended.DEFAULT_TYPES, self.Validator.DEFAULT_TYPES)
+
+
+class TestInheritValidator(unittest.TestCase):
+    def test_1_inherit_DraftValidator_has_no_side_effect(self):
+        """
+        Inheriting a Draft-validator should not have side-effects not experiene
+        """
+        for validator_class in (Draft3Validator, Draft4Validator):
+            orig_rules_count = len(validator_class.VALIDATORS)
+
+            class MyValidator(validator_class):
+                def __init__(self, schema, types=(), resolver=None, format_checker=None):
+                    super().__init__(schema, types, resolver, format_checker)
+
+                    self._types.update({u"some":   u"type"})
+                    self.VALIDATORS.update({u"some": u"rule"})
+
+            MyValidator({})
+
+            self.assertEqual(len(validator_class.VALIDATORS), orig_rules_count, validator_class.VALIDATORS)
+
+    def test_2_extend_DraftValidator_has_no_side_effect(self):
+        """
+        Extending a Draft-validator should not have side-effects not experiene
+        """
+        for validator_class in (Draft3Validator, Draft4Validator):
+            orig_rules_count = len(validator_class.VALIDATORS)
+
+            extend(validator_class, validators={u"some" : u"rule"})
+
+            self.assertEqual(len(validator_class.VALIDATORS), orig_rules_count, validator_class.VALIDATORS)
 
 
 class TestIterErrors(unittest.TestCase):
