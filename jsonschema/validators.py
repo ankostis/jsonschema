@@ -53,13 +53,12 @@ def create(meta_schema, validators=(), version=None, default_types=None):  # noq
         }
 
     class Validator(object):
-        VALIDATORS = dict(validators)
         META_SCHEMA = dict(meta_schema)
-        DEFAULT_TYPES = dict(default_types)
-
         def __init__(
             self, schema, types=(), resolver=None, format_checker=None,
         ):
+            self.VALIDATORS = dict(validators)
+            self.DEFAULT_TYPES = dict(default_types)
             self._types = dict(self.DEFAULT_TYPES)
             self._types.update(types)
 

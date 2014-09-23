@@ -80,7 +80,6 @@ class TestInheritValidator(unittest.TestCase):
         Inheriting a Draft-validator should not have side-effects not experiene
         """
         for validator_class in (Draft3Validator, Draft4Validator):
-            orig_rules_count = len(validator_class.VALIDATORS)
 
             class MyValidator(validator_class):
                 def __init__(self, schema, types=(), resolver=None, format_checker=None):
@@ -89,20 +88,24 @@ class TestInheritValidator(unittest.TestCase):
                     self._types.update({u"some":   u"type"})
                     self.VALIDATORS.update({u"some": u"rule"})
 
-            MyValidator({})
+            mm = MyValidator({})
+            orig_rules_count = len(mm.VALIDATORS)
+            mm = MyValidator({})
 
-            self.assertEqual(len(validator_class.VALIDATORS), orig_rules_count, validator_class.VALIDATORS)
+            self.assertEqual(len(mm.VALIDATORS), orig_rules_count, mm.VALIDATORS)
 
     def test_2_extend_DraftValidator_has_no_side_effect(self):
         """
         Extending a Draft-validator should not have side-effects not experiene
         """
         for validator_class in (Draft3Validator, Draft4Validator):
-            orig_rules_count = len(validator_class.VALIDATORS)
+            MyValidator = extend(validator_class, validators={u"some" : u"rule"})
 
-            extend(validator_class, validators={u"some" : u"rule"})
+            mm = MyValidator({})
+            orig_rules_count = len(mm.VALIDATORS)
+            mm = MyValidator({})
 
-            self.assertEqual(len(validator_class.VALIDATORS), orig_rules_count, validator_class.VALIDATORS)
+            self.assertEqual(len(mm.VALIDATORS), orig_rules_count, mm.VALIDATORS)
 
 
 class TestIterErrors(unittest.TestCase):

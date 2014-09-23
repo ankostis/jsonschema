@@ -20,7 +20,7 @@ from jsonschema.validators import (
 )
 
 
-__version__ = "2.4.0"
+__version__ = "2.4.0-inherit_validators"
 
 
 # flake8: noqa
